@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb2
+    volumes:
+      - /mnt/influxdb/data:/var/lib/influxdb2:rw
+
+    ports:
+      - 8086:8086
+#    environment:
+#      - INFLUXDB_DB=mydb
+#      - INFLUXDB_ADMIN_USER=admin
+#      - INFLUXDB_ADMIN_PASSWORD=adminpassword
+#      - INFLUXDB_USER=user
+#      - INFLUXDB_USER_PASSWORD=userpassword
+    restart: unless-stopped
+#
+#networks:
+#
+#volumes:
