@@ -2,29 +2,32 @@ import random
 import time
 from datetime import datetime
 import neurokit2 as nk
+from influxdb_client import InfluxDBClient, Point, WritePrecision
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 
 previous_values = {}
 
-from influxdb_client import InfluxDBClient, Point, WritePrecision
-from influxdb_client.client.write_api import SYNCHRONOUS
 
 def write_to_influx(vitals):
     with InfluxDBClient(url="http://localhost:8086", token="LgIF73GNfozf_d6rAgPqP2myBjxoCS81NOUUBhDamHG0yp_K8ANxmgJooNExZPGvvQKn4O18V16w1o93ZSdwNA==", org="FINKI") as client:
         write_api = client.write_api(write_options=SYNCHRONOUS)
-        point = Point("vitals").tag("patient", "patient1")
-        for key, value in vitals.items():
-            if key != "time":
-                point = point.field(key, value)
-        point.time(vitals['time'], WritePrecision.NS)
+        # point = Point("vitals").tag("patient", "patient1")
+        # for key, value in vitals.items():
+        #     if key != "time":
+        #         point = point.field(key, value)
+        # point.time(vitals['time'], WritePrecision.NS)
+        point = Point.from_dict(vitals, WritePrecision.NS)
         write_api.write("proekt", "FINKI", point)
         print("HI")
+
 
 def simulate_vitals():
     while True:
         vitals = generate_vitals(20)
         write_to_influx(vitals)
-        time.sleep(1)
+        time.sleep(10)
+
 
 def initialize_values(age):
     # Initialize values
@@ -98,13 +101,13 @@ def initialize_blood_pressure():
     else:
         systolic = random.randint(60, 220)
         diastolic = random.randint(40, 120)
-    return systolic
+    return systolic, diastolic
 
 
 def initialize_ecg():
     # ECG value generator which takes into the current heart rate
     ecg = nk.ecg_simulate(duration=8, sampling_rate=200, heart_rate=80)
-    return 1
+    return ecg
 
 
 def get_age_based_value(age, adult_min, adult_max, non_adult_min, non_adult_max):
@@ -137,6 +140,7 @@ def update_pulse(previous_pulse, age):
         new_pulse = max(80, min(new_pulse, 160))
     return new_pulse
 
+
 def update_respiration_rate(previous_rate, age):
     delta = random.randint(-2, 2)
     new_rate = previous_rate + delta
@@ -153,14 +157,14 @@ def update_respiration_rate(previous_rate, age):
 def update_blood_pressure(previous_bp):
     delta_systolic = random.randint(-10, 10)
     delta_diastolic = random.randint(-5, 5)
-    # new_systolic = max(90, min(previous_bp[0] + delta_systolic, 120))
-    # new_diastolic = max(60, min(previous_bp[1] + delta_diastolic, 80))
-    return 1
+    new_systolic = max(90, min(previous_bp[0] + delta_systolic, 120))
+    new_diastolic = max(60, min(previous_bp[1] + delta_diastolic, 80))
+    return new_systolic, new_diastolic
 
 
 def update_ecg(pulse):
     ecg = nk.ecg_simulate(duration=8, sampling_rate=200, heart_rate=pulse)
-    return 1
+    return ecg
 
 
 def generate_vitals(age):
@@ -174,22 +178,25 @@ def generate_vitals(age):
         previous_values["blood_pressure"] = update_blood_pressure(previous_values["blood_pressure"])
         previous_values["ecg"] = update_ecg(previous_values["pulse"])
 
+    # return {
+    #     'time': datetime.utcnow(),
+    #     'temperature': previous_values["temperature"],
+    #     'pulse': previous_values["pulse"],
+    #     'respiration_rate': previous_values["respiration_rate"],
+    #     'blood_pressure': previous_values["blood_pressure"],
+    #     'ecg': previous_values["ecg"]
+    # }
+    ecg_string = ','.join(map(str, previous_values["ecg"]))
     return {
-        'time': datetime.utcnow(),
-        'temperature': previous_values["temperature"],
-        'pulse': previous_values["pulse"],
-        'respiration_rate': previous_values["respiration_rate"],
-        'blood_pressure': previous_values["blood_pressure"],
-        'ecg': previous_values["ecg"]
+        "measurement": "patient1",
+        "fields": {'temperature': previous_values["temperature"],
+                   'pulse': previous_values["pulse"],
+                   'respiration_rate': previous_values["respiration_rate"],
+                   'systolic': previous_values["blood_pressure"][0],
+                   'diastolic': previous_values["blood_pressure"][1],
+                   'ecg_string': ecg_string},
+        'time': datetime.utcnow()
     }
-
-
-# def simulate_vitals(age):
-#     while True:
-#         vitals = generate_vitals(age)
-#         print(vitals)
-#         # Integrate storing this data to InfluxDB
-#         time.sleep(1)
 
 
 if __name__ == "__main__":
