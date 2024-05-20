@@ -6,17 +6,32 @@ services:
     container_name: influxdb2
     volumes:
       - /mnt/influxdb/data:/var/lib/influxdb2:rw
+    networks:
+      compose-reload:
+        aliases:
+          - influxdb.local
 
     ports:
       - 8086:8086
-#    environment:
-#      - INFLUXDB_DB=mydb
-#      - INFLUXDB_ADMIN_USER=admin
-#      - INFLUXDB_ADMIN_PASSWORD=adminpassword
-#      - INFLUXDB_USER=user
-#      - INFLUXDB_USER_PASSWORD=userpassword
+    environment:
+      - INFLUXDB_INIT_MODE=setup
+      - INFLUXDB_INIT_USERNAME=vebproekt
+      - INFLUXDB_INIT_PASSWORD=vebprogramiranje
+      - INFLUXDB_INIT_BUCKET=proekt
+      - INFLUXDB_INIT_RETENTION=24h
+      - INFLUXDB_INIT_ADMIN_TOKEN=Wmg3QHr3kLNBRbHtBw9xrftUgDSQ-kLCT5VZA_28O3KmWiCQH9B3xeQGwvLfhAh2o8FvMDrEpL6XV49PbTfJbg==
     restart: unless-stopped
-#
-#networks:
-#
-#volumes:
+  python:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+        - ./:/app
+    networks:
+          - compose-reload
+    depends_on:
+      - influxdb
+
+networks:
+  compose-reload:
+    driver: bridge

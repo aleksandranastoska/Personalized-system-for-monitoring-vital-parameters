@@ -10,7 +10,7 @@ previous_values = {}
 
 
 def write_to_influx(vitals):
-    with InfluxDBClient(url="http://localhost:8086", token="LgIF73GNfozf_d6rAgPqP2myBjxoCS81NOUUBhDamHG0yp_K8ANxmgJooNExZPGvvQKn4O18V16w1o93ZSdwNA==", org="FINKI") as client:
+    with InfluxDBClient(url="http://influxdb.local:8086", token="Wmg3QHr3kLNBRbHtBw9xrftUgDSQ-kLCT5VZA_28O3KmWiCQH9B3xeQGwvLfhAh2o8FvMDrEpL6XV49PbTfJbg==", org="FINKI") as client:
         write_api = client.write_api(write_options=SYNCHRONOUS)
         # point = Point("vitals").tag("patient", "patient1")
         # for key, value in vitals.items():

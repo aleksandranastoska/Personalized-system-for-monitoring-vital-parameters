@@ -1,0 +1,3 @@
+requests
+neurokit2
+influxdb-client
