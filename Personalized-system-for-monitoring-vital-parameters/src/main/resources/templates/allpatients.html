@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>All Patients</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+<h1>All Patients</h1>
+<table>
+    <thead>
+    <tr>
+        <th>Time</th>
+        <th>Value</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="table : ${tables}">
+        <td th:each="record : ${table.records}">
+            <span th:text="${record.getTime()}"></span>
+        </td>
+        <td th:each="record : ${table.records}">
+            <span th:text="${record.getValueByKey('_value')}"></span>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
