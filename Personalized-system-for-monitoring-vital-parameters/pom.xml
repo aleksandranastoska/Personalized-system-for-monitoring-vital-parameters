@@ -11,8 +11,8 @@
     <groupId>finki.veb</groupId>
     <artifactId>Personalized-system-for-monitoring-vital-parameters</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Personalized-system-for-monitoring-vital-parameters</name>
-    <description>Personalized-system-for-monitoring-vital-parameters</description>
+    <name>personalized-system-for-monitoring-vital-parameters</name>
+    <description>personalized-system-for-monitoring-vital-parameters</description>
     <properties>
         <java.version>17</java.version>
     </properties>
