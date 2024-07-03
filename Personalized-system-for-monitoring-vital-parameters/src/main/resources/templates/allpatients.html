@@ -1,42 +1,27 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>All Patients</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 </head>
 <body>
-<h1>All Patients</h1>
-<table>
-    <thead>
-    <tr>
-        <th>Time</th>
-        <th>Value</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="table : ${tables}">
-        <td th:each="record : ${table.records}">
-            <span th:text="${record.getTime()}"></span>
-        </td>
-        <td th:each="record : ${table.records}">
-            <span th:text="${record.getValueByKey('_value')}"></span>
-        </td>
-    </tr>
-    </tbody>
-</table>
+<div class="container">
+    <h1 class="mt-5">All Patients</h1>
+    <table class="table table-striped mt-3">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Details</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="patient : ${patients}">
+            <td th:text="${patient.id}"></td>
+            <td><a th:href="@{'/patients/' + ${patient.id}}" class="btn btn-primary">View Details</a></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>
