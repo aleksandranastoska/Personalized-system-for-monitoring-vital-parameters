@@ -1,3 +1,4 @@
+import sys
 import random
 import time
 from datetime import datetime
@@ -5,34 +6,20 @@ import neurokit2 as nk
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 
-
+# Global dictionary to store previous values for each patient
 previous_values = {}
 
 
-def write_to_influx(vitals):
-    with InfluxDBClient(url="http://influxdb.local:8086", token="1kN0EFQUbVp5iHjLqdKrqQXIjMbWCfMX5Frqy6m30hXaCZjsnn03Tga5R9Z7LnOrRNLuigjWfmIY1RYKiGpK7Q==", org="FINKI") as client:
+def write_to_influx(patient_id, vitals):
+    with InfluxDBClient(url="http://influxdb.local:8086", token="your-token", org="FINKI") as client:
         write_api = client.write_api(write_options=SYNCHRONOUS)
-        # point = Point("vitals").tag("patient", "patient1")
-        # for key, value in vitals.items():
-        #     if key != "time":
-        #         point = point.field(key, value)
-        # point.time(vitals['time'], WritePrecision.NS)
         point = Point.from_dict(vitals, WritePrecision.NS)
         write_api.write("proekt", "FINKI", point)
-        print("HI")
-
-
-def simulate_vitals():
-    while True:
-        vitals = generate_vitals(20)
-        write_to_influx(vitals)
-        time.sleep(10)
+        print(f"Wrote data for {patient_id}")
 
 
 def initialize_values(age):
-    # Initialize values
-    global previous_values
-    previous_values = {
+    return {
         "temperature": initialize_temperature(),
         "pulse": initialize_pulse(age),
         "respiration_rate": initialize_respiration_rate(age),
@@ -41,9 +28,7 @@ def initialize_values(age):
     }
 
 
-# Functions for initializing values when first instancing a patient
 def initialize_temperature():
-    # Normal human body temperature in Celsius
     if random.random() < 0.8:
         body_temperature = round(random.uniform(36.1, 37.5), 1)
     else:
@@ -52,7 +37,6 @@ def initialize_temperature():
 
 
 def initialize_pulse(age):
-    # Normal resting pulse for adults ranges from 60 to 100 beats per minute
     if random.random() < 0.8:
         if age >= 18:
             pulse_rate = random.randint(60, 100)
@@ -75,7 +59,6 @@ def initialize_pulse(age):
 
 
 def initialize_respiration_rate(age):
-    # Normal respiration rate for adults ranges from 12 to 16 breaths per minute
     if random.random() < 0.8:
         if age >= 18:
             respiration_rate = random.randint(12, 20)
@@ -94,7 +77,6 @@ def initialize_respiration_rate(age):
 
 
 def initialize_blood_pressure():
-    # Normal systolic/diastolic pressure in mmHg
     if random.random() < 0.8:
         systolic = random.randint(90, 120)
         diastolic = random.randint(60, 80)
@@ -105,31 +87,19 @@ def initialize_blood_pressure():
 
 
 def initialize_ecg():
-    # ECG value generator which takes into the current heart rate
     ecg = nk.ecg_simulate(duration=8, sampling_rate=200, heart_rate=80)
     return ecg
 
 
-def get_age_based_value(age, adult_min, adult_max, non_adult_min, non_adult_max):
-    if age >= 18:
-        return random.randint(adult_min, adult_max)
-    else:
-        return random.randint(non_adult_min, non_adult_max)
-
-
-# Functions for updating values based on previous values
 def update_temperature(previous_temp):
-    # Use the previous temperature to slightly alter the new one
-    delta = random.uniform(-0.2, 0.2)  # Small change to simulate real temperature fluctuation
+    delta = random.uniform(-0.2, 0.2)
     new_temp = round(previous_temp + delta, 1)
     return new_temp
 
 
 def update_pulse(previous_pulse, age):
-    # Pulse change is small unless there is a significant event
     delta = random.randint(-5, 5)
     new_pulse = previous_pulse + delta
-    # Keep pulse within reasonable boundaries based on age
     if age >= 18:
         new_pulse = max(60, min(new_pulse, 100))
     elif 6 <= age < 17:
@@ -144,7 +114,6 @@ def update_pulse(previous_pulse, age):
 def update_respiration_rate(previous_rate, age):
     delta = random.randint(-2, 2)
     new_rate = previous_rate + delta
-    # Adjust rates for age groups
     if age >= 18:
         new_rate = max(12, min(new_rate, 20))
     elif 6 <= age < 17:
@@ -167,39 +136,44 @@ def update_ecg(pulse):
     return ecg
 
 
-def generate_vitals(age):
+def generate_vitals(patient_id, age):
     global previous_values
-    if not previous_values:
-        initialize_values(age)
+    if patient_id not in previous_values:
+        previous_values[patient_id] = initialize_values(age)
     else:
-        previous_values["temperature"] = update_temperature(previous_values["temperature"])
-        previous_values["pulse"] = update_pulse(previous_values["pulse"], age)
-        previous_values["respiration_rate"] = update_respiration_rate(previous_values["respiration_rate"], age)
-        previous_values["blood_pressure"] = update_blood_pressure(previous_values["blood_pressure"])
-        previous_values["ecg"] = update_ecg(previous_values["pulse"])
+        previous_values[patient_id]["temperature"] = update_temperature(previous_values[patient_id]["temperature"])
+        previous_values[patient_id]["pulse"] = update_pulse(previous_values[patient_id]["pulse"], age)
+        previous_values[patient_id]["respiration_rate"] = update_respiration_rate(previous_values[patient_id]["respiration_rate"], age)
+        previous_values[patient_id]["blood_pressure"] = update_blood_pressure(previous_values[patient_id]["blood_pressure"])
+        previous_values[patient_id]["ecg"] = update_ecg(previous_values[patient_id]["pulse"])
 
-    # return {
-    #     'time': datetime.utcnow(),
-    #     'temperature': previous_values["temperature"],
-    #     'pulse': previous_values["pulse"],
-    #     'respiration_rate': previous_values["respiration_rate"],
-    #     'blood_pressure': previous_values["blood_pressure"],
-    #     'ecg': previous_values["ecg"]
-    # }
-    ecg_string = ','.join(map(str, previous_values["ecg"]))
+    ecg_string = ','.join(map(str, previous_values[patient_id]["ecg"]))
     return {
-        "measurement": "patient1",
-        "fields": {'temperature': previous_values["temperature"],
-                   'pulse': previous_values["pulse"],
-                   'respiration_rate': previous_values["respiration_rate"],
-                   'systolic': previous_values["blood_pressure"][0],
-                   'diastolic': previous_values["blood_pressure"][1],
-                   'ecg_string': ecg_string},
+        "measurement": patient_id,
+        "fields": {
+            'temperature': float(previous_values[patient_id]["temperature"]),
+            'pulse': int(previous_values[patient_id]["pulse"]),
+            'respiration_rate': int(previous_values[patient_id]["respiration_rate"]),
+            'systolic': int(previous_values[patient_id]["blood_pressure"][0]),
+            'diastolic': int(previous_values[patient_id]["blood_pressure"][1]),
+            'ecg_string': ecg_string  # This is a string and should not be used in numeric operations
+        },
         'time': datetime.utcnow()
     }
 
 
+def main(patient_id, age):
+    previous_values[patient_id] = initialize_values(age)
+    while True:
+        vitals = generate_vitals(patient_id, age)
+        write_to_influx(patient_id, vitals)
+        time.sleep(10)
+
+
 if __name__ == "__main__":
-    age = 20
-    simulate_vitals()
-    print("HI")
+    if len(sys.argv) != 3:
+        print("Usage: python script.py <patient_id> <age>")
+        sys.exit(1)
+    patient_id = sys.argv[1]
+    age = int(sys.argv[2])
+    main(patient_id, age)

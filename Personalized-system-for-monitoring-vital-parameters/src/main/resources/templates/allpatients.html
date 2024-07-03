@@ -20,21 +20,32 @@
 </head>
 <body>
 <h1>All Patients</h1>
+<div class="col-sm-12 col-md-12">
+    <a href="/patient/add" class="btn btn-block btn-dark">
+        Add new patient
+    </a>
+</div>
 <table>
     <thead>
     <tr>
-        <th>Time</th>
-        <th>Value</th>
+        <th>Id</th>
+        <th>EMBG</th>
+        <th>Date of Birth</th>
+        <th>Gender</th>
+        <th>Age</th>
+        <th>Name</th>
+        <th>Surname</th>
     </tr>
     </thead>
     <tbody>
-    <tr th:each="table : ${tables}">
-        <td th:each="record : ${table.records}">
-            <span th:text="${record.getTime()}"></span>
-        </td>
-        <td th:each="record : ${table.records}">
-            <span th:text="${record.getValueByKey('_value')}"></span>
-        </td>
+    <tr th:each="patient : ${patients}">
+        <td th:text="${patient.id}"></td>
+        <td th:text="${patient.embg}"></td>
+        <td th:text="${#dates.format(patient.dateOfBirth, 'yyyy-MM-dd')}"></td>
+        <td th:text="${patient.gender}"></td>
+        <td th:text="${patient.age}"></td>
+        <td th:text="${patient.name}"></td>
+        <td th:text="${patient.surname}"></td>
     </tr>
     </tbody>
 </table>
